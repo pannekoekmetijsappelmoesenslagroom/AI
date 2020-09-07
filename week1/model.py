@@ -2,6 +2,7 @@ import random
 import heapq
 import math
 import config as cf
+from tkinter import messagebox
 
 # global var
 grid  = [[0 for x in range(cf.SIZE)] for y in range(cf.SIZE)]
@@ -32,16 +33,65 @@ def bernoulli_trial(app):
 
 def get_grid_value(node):
     # node is a tuple (x, y), grid is a 2D list [x][y]
-    return grid[node[0]][node[1]]
+    return grid[node.x][node.y]
 
 def set_grid_value(node, value): 
     # node is a tuple (x, y), grid is a 2D list [x][y]
-    grid[node[0]][node[1]] = value
+    grid[node.x][node.y] = value
+
+
+def reconstruct_path(app, cameFrom, current, start):
+    total_path = [current]
+    while current != start:
+        nextCurrent = cameFrom[current.y][current.x]
+        app.plot_line_segment(current.y, current.x, nextCurrent.y, nextCurrent.x, color=cf.FINAL_C)
+        app.pause()
+        current = nextCurrent
+
+
+def neighbors_g(n):
+    if n.y+1 <= cf.SIZE-1:  yield cf.Point(n.x,   n.y+1 )
+    if n.x+1 <= cf.SIZE-1:  yield cf.Point(n.x+1, n.y   )
+    if n.y-1 >= 0:          yield cf.Point(n.x,   n.y-1 )
+    if n.x-1 >= 0:          yield cf.Point(n.x-1, n.y   )
+
+def g(n, start):
+    return abs(n.x-start.x) + abs(n.y-start.y)
+
+def h(n, goal):
+    return math.sqrt((n.x-goal.x)**2 + (n.y-goal.y)**2)
 
 def search(app, start, goal):
+    openSet = PriorityQueue()
+    openSet.put(start, 1) 
 
-    # plot a sample path for demonstration
-    for i in range(cf.SIZE-1):
-        app.plot_line_segment(i, i, i, i+1, color=cf.FINAL_C)
-        app.plot_line_segment(i, i+1, i+1, i+1, color=cf.FINAL_C)
-        app.pause()
+    cameFrom = [cf.SIZE*[0] for i in range(cf.SIZE)]
+
+    gScore = [cf.SIZE*[99999] for i in range(cf.SIZE)]
+    gScore[start.y][start.x] = 0
+
+    checkedlist = [cf.SIZE*[0] for i in range(cf.SIZE)]
+    checkedlist[start.y][start.x] = 1
+
+    while not openSet.empty():
+        current = openSet.get()
+        if current == goal:
+            reconstruct_path(app, cameFrom, current, start)
+            return 
+        
+        for neighbor in neighbors_g(current):
+            tentative_gScore = gScore[current.y][current.x] + 1
+            if tentative_gScore < gScore[neighbor.y][neighbor.x]:
+                cameFrom[neighbor.y][neighbor.x] = current
+                gScore[neighbor.y][neighbor.x] = tentative_gScore
+                if checkedlist[neighbor.y][neighbor.x] == 0 and grid[neighbor.y][neighbor.x] != 'b':
+                    checkedlist[neighbor.y][neighbor.x] = 1
+                    
+                    app.plot_line_segment(current.y, current.x, neighbor.y, neighbor.x, color=cf.PATH_C)
+                    app.pause()
+                    
+                    openSet.put(neighbor, h(neighbor, goal))
+
+    print("Failed to find a route")
+    messagebox.showinfo("Error", "No path")
+
