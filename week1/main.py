@@ -83,7 +83,7 @@ class MainApp(tk.Frame):
             if not START_FLAG:
                 self.re_plot()
             START_FLAG = False
-            mo.search(self, cf.START, cf.GOAL)
+            mo.search(self, cf.START, cf.GOAL, self.alg.get()=="A*")
 
         start_button = tk.Button(lf1, text="Start", command=start_search, width=10)
         start_button.grid(row=1, column=1, sticky='w', padx=5, pady=5)

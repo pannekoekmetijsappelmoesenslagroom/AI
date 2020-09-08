@@ -61,14 +61,11 @@ def g(n, start):
 def h(n, goal):
     return math.sqrt((n.x-goal.x)**2 + (n.y-goal.y)**2)
 
-def search(app, start, goal):
+def search(app, start, goal, use_h):
     openSet = PriorityQueue()
     openSet.put(start, 1) 
 
     cameFrom = [cf.SIZE*[0] for i in range(cf.SIZE)]
-
-    gScore = [cf.SIZE*[99999] for i in range(cf.SIZE)]
-    gScore[start.y][start.x] = 0
 
     checkedlist = [cf.SIZE*[0] for i in range(cf.SIZE)]
     checkedlist[start.y][start.x] = 1
@@ -80,17 +77,18 @@ def search(app, start, goal):
             return 
         
         for neighbor in neighbors_g(current):
-            tentative_gScore = gScore[current.y][current.x] + 1
-            if tentative_gScore < gScore[neighbor.y][neighbor.x]:
+            if g(current, start) < g(neighbor, start):
                 cameFrom[neighbor.y][neighbor.x] = current
-                gScore[neighbor.y][neighbor.x] = tentative_gScore
                 if checkedlist[neighbor.y][neighbor.x] == 0 and grid[neighbor.y][neighbor.x] != 'b':
                     checkedlist[neighbor.y][neighbor.x] = 1
                     
                     app.plot_line_segment(current.y, current.x, neighbor.y, neighbor.x, color=cf.PATH_C)
                     app.pause()
                     
-                    openSet.put(neighbor, h(neighbor, goal))
+                    if use_h:
+                        openSet.put(neighbor, h(neighbor, goal))
+                    else:
+                        openSet.put(neighbor, 1)
 
     print("Failed to find a route")
     messagebox.showinfo("Error", "No path")

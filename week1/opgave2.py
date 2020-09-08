@@ -1,3 +1,14 @@
+"""
+Vraag: wat is de tijdcomplexiteit van je oplossing?  
+
+board maken n*n
+worden lijst M * max(M)
+board search N*N * 4 * max(M)
+
+O(N^2)
+
+"""
+
 import random
 
 # Normal Tree implementation with the exception that leaves is a boolean instead of a seperate object

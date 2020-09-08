@@ -1,3 +1,14 @@
+"""
+Vraag: wat is de tijdcomplexiteit van je oplossing?
+
+n = board size
+hinst lijst maken: n*n * log(n)
+board find 1: n*n
+vullen: 4*n*n* n*n/len(hints)
+
+O(n^4)
+"""
+
 class Board():
     def __init__(self, N):
         self.N = N
