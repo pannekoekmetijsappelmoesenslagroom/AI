@@ -22,7 +22,7 @@ class MainApp(tk.Frame):
         self.re_plot()
 
     def pause(self):
-        self.root.after(int(self.delay.get()) * 25) # pause in msec
+        self.root.after(int(self.delay.get()) * 10) # pause in msec
         self.root.update_idletasks() # redraw widgets
 
     def make_grid_panel(self):
@@ -44,7 +44,7 @@ class MainApp(tk.Frame):
     def init_grid(self):
         for x in range(cf.SIZE):
             for y in range(cf.SIZE):
-                node = cf.Point(x, y)
+                node = (x, y)
                 if mo.bernoulli_trial(self):
                     mo.set_grid_value(node, 'b') # set as blocked
                     self.plot_node(node, color=cf.BLOCK_C)
@@ -60,8 +60,8 @@ class MainApp(tk.Frame):
 
     def plot_node(self, node, color):
         # size of (red) rectangle is 8 by 8
-        x0 = node.x * cf.CELL - 4
-        y0 = node.y * cf.CELL - 4
+        x0 = node[0] * cf.CELL - 4
+        y0 = node[1] * cf.CELL - 4
         x1 = x0 + 8 + 1
         y1 = y0 + 8 + 1
         self.canvas.create_rectangle(x0+cf.TR, y0+cf.TR, x1+cf.TR, y1+cf.TR, fill = color)
@@ -83,7 +83,7 @@ class MainApp(tk.Frame):
             if not START_FLAG:
                 self.re_plot()
             START_FLAG = False
-            mo.search(self, cf.START, cf.GOAL, self.alg.get()=="A*")
+            mo.search(self, cf.START, cf.GOAL)
 
         start_button = tk.Button(lf1, text="Start", command=start_search, width=10)
         start_button.grid(row=1, column=1, sticky='w', padx=5, pady=5)
@@ -140,7 +140,7 @@ class MainApp(tk.Frame):
         current = cf.GOAL
         while current != cf.START:
             prev = path[current]
-            self.plot_line_segment(prev.x, prev.y, current.x, current.y, color=cf.FINAL_C)
+            self.plot_line_segment(prev[0], prev[1], current[0], current[1], color=cf.FINAL_C)
             current = prev
 
 # create and start GUI

@@ -1,20 +1,18 @@
 # assuming a resulution of 1920 x 1080 = 16 : 9
-from collections import namedtuple
-Point = namedtuple('Point', 'x y')
 
 # color scheme
 BG_C    = '#FDF6E3'
 GRID_C  = '#542437'
 BLOCK_C = 'red'
-PATH_C  = 'lightblue'
+PATH_C  = '#f317ff'
 FINAL_C = 'blue'
 START_C = '#C7F464'
 GOAL_C  = 'yellow'
 
 # grid size
-START = Point(0, 0)
+START = (10, 5)
 SIZE  = 25 # the nr of nodes=grid crossings in a row (or column)
-GOAL  = Point(SIZE-1, SIZE-1)
+GOAL  = (SIZE-1, SIZE-1)
 
 # pixel sizes
 CELL  = 35 # size of cell/square in pixels
