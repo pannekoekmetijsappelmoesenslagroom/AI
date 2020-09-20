@@ -255,9 +255,37 @@ def negamax(node, depth, player_val, heuristic, get_children):
     return value, best
 
 
+def get_board_with_magic_scores():
+    magic_scores = [
+        1.010000 	,-0.270000 	,0.560000 	,-0.253853 	,-0.253853 	,0.560000 	,-0.270000 	,1.010000,
+        -0.270000 	,-0.740000 	,-0.384101 	,-0.080000 	,-0.080000 	,-0.384101 	,-0.740000 	,-0.270000,
+        0.560000 	,-0.384101 	,-0.239954 	,-0.155662 	,-0.155662 	,-0.239954 	,-0.384101 	,0.560000,
+        -0.253853 	,-0.080000 	,-0.155662 	,-0.010000 	,-0.010000 	,-0.155662 	,-0.080000 	,-0.253853,
+        -0.253853 	,-0.080000 	,-0.155662 	,-0.010000 	,-0.010000 	,-0.155662 	,-0.080000 	,-0.253853,
+        0.560000 	,-0.384101 	,-0.239954 	,-0.155662 	,-0.155662 	,-0.239954 	,-0.384101 	,0.560000,
+        -0.270000 	,-0.740000 	,-0.384101 	,-0.080000 	,-0.080000 	,-0.384101 	,-0.740000 	,-0.270000,
+        1.010000 	,-0.270000 	,0.560000 	,-0.253853 	,-0.253853 	,0.560000 	,-0.270000 	,1.010000,
+    ]
+    assert(len(magic_scores) is len(squares()))
+
+    magic_scores_board = initial_board()
+
+    i = 0
+    for sq in squares():
+        magic_scores_board[sq] = magic_scores[i]
+        i = i + 1
+
+    assert(magic_scores_board[11] == magic_scores[0])
+    assert(magic_scores_board[88] == magic_scores[63])
+
+    return magic_scores_board
+
+
 def negamax_strategy(player, board):
 
     max_depth = 5
+
+    magic_scores_board = get_board_with_magic_scores()
 
     class Node:
         def __init__(self, move, tempBoard):
@@ -266,6 +294,18 @@ def negamax_strategy(player, board):
 
     def heuristic(node):
         return score(player, node.tempBoard)
+
+    def magic_heuristic(node):
+
+        score = 0
+        for sq in squares():
+            if node.tempBoard[sq] is player:
+                score = score + magic_scores_board[sq]
+
+            if node.tempBoard[sq] is opponent(player):
+                score = score - magic_scores_board[sq]
+
+        return score
 
     def get_children(node, player_val):
         children = []
@@ -281,9 +321,10 @@ def negamax_strategy(player, board):
         return children
 
 
-    _h, bestNode = negamax(Node(None, board), max_depth, 1, heuristic, get_children)
+    _h, bestNode = negamax(Node(None, board), max_depth, 1, magic_heuristic, get_children)
 
     assert(bestNode.move is not None)
+    print(_h)
 
     return bestNode.move
 
