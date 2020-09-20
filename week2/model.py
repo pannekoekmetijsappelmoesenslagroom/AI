@@ -1,6 +1,7 @@
 import random
 import itertools
 import math
+from copy import copy, deepcopy
 
 MAX_DEPTH = 3
 
@@ -81,21 +82,32 @@ MERGE_FUNCTIONS = {
 }
 
 def move_exists(b):
-    # check whether or not a move exists on the board
-    # b = [[1, 2, 3, 4], [5, 6, 7, 8]]
-    # move_exists(b) return False
-    def inner(b):
-        for row in b:
-            for x, y in zip(row[:-1], row[1:]):
-                # tuples (1, 2),(2, 3),(3, 4),(5, 6),(6, 7),(7, 8)
-                if x == y or x == 0 or y == 0:
-                    return True
-        return False
 
-    if inner(b) or inner(zip(*b)):
-        return True
-    else:
-        return False
+
+    for move in MERGE_FUNCTIONS.keys():
+        b = MERGE_FUNCTIONS[move](b)
+
+    for i in range(4):
+        for j in range(4):
+            if b[i][j] == 0:
+                return True
+    return False
+
+    # # check whether or not a move exists on the board
+    # # b = [[1, 2, 3, 4], [5, 6, 7, 8]]
+    # # move_exists(b) return False
+    # def inner(b):
+    #     for row in b:
+    #         for x, y in zip(row[:-1], row[1:]):
+    #             # tuples (1, 2),(2, 3),(3, 4),(5, 6),(6, 7),(7, 8)
+    #             if x == y or x == 0 or y == 0:
+    #                 return True
+    #     return False
+
+    # if inner(b) or inner(zip(*b)):
+    #     return True
+    # else:
+    #     return False
 
 def start():
     # make initial board
@@ -154,5 +166,117 @@ def test():
 def get_random_move():
     return random.choice(list(MERGE_FUNCTIONS.keys()))
 
+
+class Node:
+    def __init__(self, move, tempBoard, probability=-1):
+        self.move = move
+        self.tempBoard = tempBoard
+        self.probability = probability
+
+def expectimax(node, depth, player_val, heuristic, get_children):
+
+    children = get_children(node, player_val)
+
+    value = -math.inf
+    best = node
+
+    if depth == 0 or len(children) == 0:
+        value = heuristic(node)
+
+    elif player_val == 1:
+        for child in children:
+            score, _ = expectimax(child, depth - 1, -1, heuristic, get_children)
+            if score >= value:
+                value = score
+                best = child
+
+    else:
+        value = 0
+        for child in children:
+            score, _ = expectimax(child, depth - 1, 1, heuristic, get_children)
+            value = value + child.probability * score
+
+    return value, best
+
+
 def get_expectimax_move(b):
-    pass
+    
+    max_depth = 4
+
+    def get_children(node, player_val):
+
+        children = []
+
+        if player_val == 1:
+            # player
+
+            if not move_exists(node.tempBoard):
+                return []
+
+            for move in MERGE_FUNCTIONS.keys():
+                new_node = Node(move, deepcopy(node.tempBoard))
+                new_node.tempBoard = MERGE_FUNCTIONS[move](new_node.tempBoard)
+                children.append(new_node)
+
+        else:
+            # random 2 or 4
+
+            open_tiles = 0
+
+            for i in range(4):
+                for j in range(4):
+                    if node.tempBoard[i][j] != 0:
+                        continue
+
+                    open_tiles = open_tiles + 1
+
+                    node2 = Node(None, deepcopy(node.tempBoard), .9)
+                    node2.tempBoard[i][j] = 2
+
+                    node4 = Node(None, deepcopy(node.tempBoard), .1)
+                    node4.tempBoard[i][j] = 4
+
+                    children.append(node2)
+                    children.append(node4)
+
+            for child in children:
+                child.probability = child.probability / open_tiles
+
+        return children
+
+    def heuristic(node):
+
+        open_tiles = 0
+        score = 0
+
+        for i in range(4):
+            for j in range(4):
+
+                val = node.tempBoard[i][j]
+
+                if val == 0:
+                    open_tiles = open_tiles + 1
+
+                if i % 3 == 0:
+                    val = val * 4
+
+                if j % 3 == 0:
+                    val = val * 4
+
+                score = score + val
+        
+        if score == 2048:
+            return math.inf
+
+        return open_tiles + score * .01
+    
+    _, bestNode = expectimax(Node(None, b), max_depth, 1, heuristic, get_children)
+
+    assert(bestNode.move is not None)
+
+    print(bestNode.move)
+
+    return bestNode.move
+
+
+
