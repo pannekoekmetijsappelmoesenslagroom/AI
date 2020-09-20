@@ -233,7 +233,7 @@ def random_strategy(player, board):
 
 import math
 
-def negamax(node, depth, player_val, heuristic, get_children):
+def negamax(node, depth, player_val, heuristic, get_children, alpha, beta):
 
     children = get_children(node, player_val)
 
@@ -245,12 +245,16 @@ def negamax(node, depth, player_val, heuristic, get_children):
     
     else:
         for child in children:
-            score, _ = negamax(child, depth - 1, -player_val, heuristic, get_children)
+            score, _ = negamax(child, depth - 1, -player_val, heuristic, get_children, -beta, -alpha)
             score = score * -1
 
             if score > value:
                 best = child
                 value = score
+
+            alpha = max(alpha, value)
+            if alpha >= beta:
+                break
 
     return value, best
 
@@ -283,7 +287,7 @@ def get_board_with_magic_scores():
 
 def negamax_strategy(player, board):
 
-    max_depth = 5
+    max_depth = 7
 
     magic_scores_board = get_board_with_magic_scores()
 
@@ -321,7 +325,7 @@ def negamax_strategy(player, board):
         return children
 
 
-    _h, bestNode = negamax(Node(None, board), max_depth, 1, magic_heuristic, get_children)
+    _h, bestNode = negamax(Node(None, board), max_depth, 1, magic_heuristic, get_children, -math.inf, math.inf)
 
     assert(bestNode.move is not None)
     print(_h)
