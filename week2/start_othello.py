@@ -59,7 +59,7 @@ def initial_board():
     return board
 
 def print_board(board):
-    # get a string representation of the board
+    # PRINT a string representation of the board
     # heading '  1 2 3 4 5 6 7 8\n'
     rep = ''
     rep += '  %s\n' % ' '.join(map(str, range(1, 9)))
@@ -67,7 +67,8 @@ def print_board(board):
     for row in range(1, 9):
         begin, end = 10*row + 1, 10*row + 9
         rep += '%d %s\n' % (row, ' '.join(board[begin:end]))
-    return rep
+    print(rep)
+    # return rep
 
 # -----------------------------------------------------------------------------
 # Playing the game
@@ -82,7 +83,7 @@ def print_board(board):
 def is_valid(move):
     # is move a square on the board?
     # move must be an int, and must refer to a real square
-    return isinstance(move, int) and move in squares()
+    return isinstance(move, int) and move in squares()  # todo: `move in squares()` is an expensive thing to check
 
 def opponent(player):
     # get player's opponent piece
@@ -163,14 +164,128 @@ def any_legal_move(player, board):
 def play(black_strategy, white_strategy):
     # play a game of Othello and return the final board and score
 
+    board = initial_board()
+    curr_player = BLACK
+
+    print("Initial board:")
+    print_board(board)
+
+    while True:
+
+        strategy = black_strategy if curr_player is BLACK else white_strategy
+        
+        print('%s turn' % PLAYERS[curr_player])
+
+        proposed_move = get_move(strategy, curr_player, board)
+
+        make_move(proposed_move, curr_player, board)
+
+        print_board(board)
+        print('%s did move %d' % (PLAYERS[curr_player], proposed_move))
+        
+        curr_player = next_player(board, curr_player)
+        if curr_player is None:
+            break   # game is done
+
+    for player, name in PLAYERS.items():
+        print('%s score: %d' % (name, score(player, board)))
+
+    return board
+
 def next_player(board, prev_player):
     # which player should move next?  Returns None if no legal moves exist
+    if any_legal_move(opponent(prev_player), board):
+        return opponent(prev_player)
+    
+    elif any_legal_move(prev_player, board):
+        return prev_player
+
+    return None
 
 def get_move(strategy, player, board):
     # call strategy(player, board) to get a move
+    move = strategy(player, board)
+    if not is_legal(move, player, board) or not is_valid(move):
+        raise IllegalMoveError(player, move, board)
+    return move
+
 
 def score(player, board):
     # compute player's score (number of player's pieces minus opponent's)
+    score = 0
+    for sq in board:
+        if sq is player:
+            score = score + 1
+        elif sq is opponent(player):
+            score = score - 1
+    return score
 
 # Play strategies
+def cli_strategy(player, board):
+    print("legal moves: ", legal_moves(player, board))
+    return int(input("Your input: "))
 
+
+import random
+
+def random_strategy(player, board):
+    return random.choice(legal_moves(player, board))
+
+import math
+
+def negamax(node, depth, player_val, heuristic, get_children):
+
+    children = get_children(node, player_val)
+
+    value = -math.inf
+    best = node
+
+    if depth == 0 or len(children) == 0:
+        value = player_val * heuristic(node)
+    
+    else:
+        for child in children:
+            score, _ = negamax(child, depth - 1, -player_val, heuristic, get_children)
+            score = score * -1
+
+            if score > value:
+                best = child
+                value = score
+
+    return value, best
+
+
+def negamax_strategy(player, board):
+
+    max_depth = 5
+
+    class Node:
+        def __init__(self, move, tempBoard):
+            self.move = move
+            self.tempBoard = tempBoard
+
+    def heuristic(node):
+        return score(player, node.tempBoard)
+
+    def get_children(node, player_val):
+        children = []
+
+        curr_player = player if player_val == 1 else opponent(player)
+
+        moves = legal_moves(curr_player, node.tempBoard)
+        for move in moves:
+            node = Node(move, node.tempBoard.copy())
+            make_move(move, curr_player, node.tempBoard)
+            children.append(node)
+
+        return children
+
+
+    _h, bestNode = negamax(Node(None, board), max_depth, 1, heuristic, get_children)
+
+    assert(bestNode.move is not None)
+
+    return bestNode.move
+
+
+play(random_strategy, negamax_strategy)
