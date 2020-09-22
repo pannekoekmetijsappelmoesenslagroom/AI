@@ -48,42 +48,55 @@ def alltours(cities):
     return [[start] + list(rest) for rest in itertools.permutations(cities - {start})]
 
 def try_nn(cities):
-    cityList = list(cities)
+    city_list = list(cities)
     result = [next(iter(cities))]
-    cityList.remove(result[0])
-    while len(cityList) > 0:
-        nearestLength = math.inf
-        nearestCity = None
-        for city in cityList:
+    city_list.remove(result[0])
+    while len(city_list) > 0:
+        nearest_length = math.inf
+        nearest_city = None
+        for city in city_list:
             d = distance(city, result[-1])
-            if (nearestLength > d):
-                nearestLength = d 
-                nearestCity = city
+            if (nearest_length > d):
+                nearest_length = d 
+                nearest_city = city
         
-        cityList.remove(nearestCity)
-        result.append(nearestCity)
+        city_list.remove(nearest_city)
+        result.append(nearest_city)
 
     return result
 
 import numpy as np
 
-def cost_change(cost_mat, n1, n2, n3, n4):
-    return cost_mat[n1][n3] + cost_mat[n2][n4] - cost_mat[n1][n2] - cost_mat[n3][n4]
-
-
+# this is based on http://pedrohfsd.com/2017/08/09/2opt-part1.html
 def try_two_opt(cities):
     route = list(cities)[:-1]
+    best_route = route
+    has_improved = True
+    while has_improved:
+        has_improved = False
+        for i in range(1, len(route)-2):
+            for j in range(i+2, len(route)):
+                new_route = route[:]
+                new_route[i:j] = route[j-1:i-1:-1]
+                if tour_length(new_route) < tour_length(best_route):
+                    best_route = new_route
+                    has_improved = True
+        route = best_route
+    return best_route
 
-    for aIndex, a in enumerate(route):
+def try_two_opt_naive(cities):
+    route = list(cities)[:-1]
+
+    for a_index, a in enumerate(route):
         for cIndex, c in enumerate(route):
-            if (aIndex != cIndex) and aIndex+1 < len(route) and cIndex+1<len(route):
-                a1 = distance(a, route[aIndex+1])
+            if (a_index != cIndex) and a_index+1 < len(route) and cIndex+1<len(route):
+                a1 = distance(a, route[a_index+1])
                 b1 = distance(c, route[cIndex+1])
 
                 a2 = distance(a, route[cIndex+1])
-                b2 = distance(c, route[aIndex+1])
+                b2 = distance(c, route[a_index+1])
                 if (a2 + b2 < a1 + b1):
-                    route[aIndex+1], route[cIndex+1] = route[cIndex+1], route[aIndex+1]  
+                    route[a_index+1], route[cIndex+1] = route[cIndex+1], route[a_index+1]  
 
     return route
 
