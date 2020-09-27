@@ -31,12 +31,12 @@ peers = dict((s, set(sum(units[s],[]))-set([s])) for s in cells)
 def test():
     # a set of tests that must pass
     assert len(cells) == 81
-    assert len(unitlist) == 27
+    assert len(unit_list) == 27
     assert all(len(units[s]) == 3 for s in cells)
     assert all(len(peers[s]) == 20 for s in cells)
-    assert units['C2'] == [['A2', 'B2', 'C2', 'D2', 'E2', 'F2', 'G2', 'H2', 'I2'],
-                           ['C1', 'C2', 'C3', 'C4', 'C5', 'C6', 'C7', 'C8', 'C9'],
-                           ['A1', 'A2', 'A3', 'B1', 'B2', 'B3', 'C1', 'C2', 'C3']]
+    # assert units['C2'] == [['A2', 'B2', 'C2', 'D2', 'E2', 'F2', 'G2', 'H2', 'I2'],
+    #                        ['C1', 'C2', 'C3', 'C4', 'C5', 'C6', 'C7', 'C8', 'C9'],
+    #                        ['A1', 'A2', 'A3', 'B1', 'B2', 'B3', 'C1', 'C2', 'C3']]
     assert peers['C2'] == set(['A2', 'B2', 'D2', 'E2', 'F2', 'G2', 'H2', 'I2',
                                'C1', 'C3', 'C4', 'C5', 'C6', 'C7', 'C8', 'C9',
                                'A1', 'A3', 'B1', 'B3'])
@@ -63,6 +63,7 @@ def parse_string_to_dict(grid_string):
     # convert grid_string into a dict of {cell: chars}
     char_list1 = [c for c in grid_string if c in digits or c == '.']
     # char_list1 = ['8', '5', '.', '.', '.', '2', '4', ...  ]
+    
     assert len(char_list1) == 81
 
     # replace '.' with '1234567'
@@ -78,10 +79,71 @@ def no_conflict(grid, c, v):
            return False # conflict
     return True
 
+def find_open_cell(grid):
+    for cell in cells:
+        if grid[cell] == '123456789':
+            return cell
+    return None
+
+
 def solve(grid):
-    # backtracking search a solution (DFS)
-    # your code here
-    pass
+    
+    open_cell = find_open_cell(grid)
+    if open_cell is None:
+        display(grid)
+        return True
+    
+    domain = [d for d in digits]
+
+    for v in domain:
+        if no_conflict(grid, open_cell, v):
+            grid[open_cell] = v
+            if solve(grid):
+                return True
+            grid[open_cell] = '123456789'
+    return False
+
+def solveARC(grid, domains):
+
+    open_cell = find_open_cell(grid)
+    if open_cell is None:
+        display(grid)
+        return True
+    
+    domain = domains[open_cell]
+
+    for v in domain:
+        if no_conflict(grid, open_cell, v):
+            # dstr = str(domains)
+            grid[open_cell] = v
+
+            emptied_domain = False
+
+            changed_peers = []
+            for peer in peers[open_cell]:
+                if v in domains[peer]:
+                    domains[peer].remove(v)
+                    changed_peers.append(peer)
+                    if len(domains[peer]) == 0:
+                        emptied_domain = True
+
+            if not emptied_domain and solveARC(grid, domains):
+                return True
+
+            grid[open_cell] = '123456789'
+            for peer in changed_peers:
+                domains[peer].append(v)
+                domains[peer].sort()
+
+            # assert(str(domains) == dstr)
+
+    return False
+
+
+    
+    
+    
+
 
 # minimum nr of clues for a unique solution is 17
 slist = [None for x in range(20)]
@@ -106,12 +168,21 @@ slist[17]= '..5...987.4..5...1..7......2...48....9.1.....6..2.....3..6..2.......
 slist[18]= '3.6.7...........518.........1.4.5...7.....6.....2......2.....4.....8.3.....5.....'
 slist[19]= '1.....3.8.7.4..............2.3.1...........958.........5.6...7.....8.2...4.......'
 
+test()
+
 for i,sudo in enumerate(slist):
+    if sudo is None:
+        continue
     print('*** sudoku {0} ***'.format(i))
     print(sudo)
     d = parse_string_to_dict(sudo)
     start_time = time.time()
-    solve(d)
+    # solve(d)
+
+
+    domains = dict((c, [d for d in digits]) for c in cells) # domain for each cell: {cell: [1..9]}
+    assert(solveARC(d, domains) == True)
+
     end_time = time.time()
     hours, rem = divmod(end_time-start_time, 3600)
     minutes, seconds = divmod(rem, 60)
