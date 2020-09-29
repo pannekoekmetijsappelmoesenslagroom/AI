@@ -120,14 +120,14 @@ def solveARC(grid, domains):
             emptied_domain = False
 
             changed_peers = []
-            for peer in peers[open_cell]:
-                if v in domains[peer]:
-                    domains[peer].remove(v)
-                    changed_peers.append(peer)
-                    if len(domains[peer]) == 0:
+            for peer in peers[open_cell]: # loop | -- [] cellen
+                if v in domains[peer]: # if v in cel
+                    domains[peer].remove(v) # domains[| -- [] cellen] remove v
+                    changed_peers.append(peer) # we changed this cell
+                    if len(domains[peer]) == 0: # we can not take this route anymore
                         emptied_domain = True
 
-            if not emptied_domain and solveARC(grid, domains):
+            if not emptied_domain and solveARC(grid.copy(), domains.copy()):
                 return True
 
             grid[open_cell] = '123456789'

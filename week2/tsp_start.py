@@ -48,7 +48,7 @@ def alltours(cities):
     return [[start] + list(rest) for rest in itertools.permutations(cities - {start})]
 
 def try_nn(cities):
-    city_list = list(cities)
+    city_list = list(cities)[:-1]
     result = [next(iter(cities))]
     city_list.remove(result[0])
     while len(city_list) > 0:

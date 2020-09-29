@@ -31,9 +31,9 @@ def all_positions(T):
 # and has the following cols: HB VB L RL (0,0) (0,1) (0,2) (0,3) (1,0) .... (3,3)
 
 rows = []
-for i, P in enumerate(triominoes):
+for i, triominoe in enumerate(triominoes):
     # i points to the 4 triominoes HB VB L RL
-    for A in all_positions(P):
+    for A in all_positions(triominoe):
         # add 4 zeros to each row
         A = np.append(np.zeros(4, dtype='int'), A)
         A[i] = 1
@@ -43,11 +43,10 @@ a = np.array(rows)
 #print(a)
 #print()
 
-# note that zip(*b) is the transpose of b
-cols = [list(i) for i in zip(*rows)]
+def transpose(rows):
+    return [list(i) for i in zip(*rows)]
 
-# note that when applying alg-x we're only interested in 1's
-# so we add 2 lists that define where the 1's are
+cols = transpose(rows)
 
 def find_ones(rows):
     lv_row_has_1_at = []
@@ -68,21 +67,51 @@ for r in row_has_1_at:
 row_valid = NR_OF_ROWS * [1]
 col_valid = NR_OF_COLS * [1]
 
-all_solutions = []
 
+# TODO: kan nog versnelt worden door ..._has_1_at te gebruiken
 def cover(r, row_valid, col_valid):
     # given the selected row r set related cols and rows invalid
     # appr. 75% of the time is spent in this function
-    pass
+    for x, current_col_valid in enumerate(col_valid):
+        if current_col_valid:
+            if r[x] == True:
+                for y, current_row_valid in enumerate(row_valid):
+                    if current_row_valid:
+                        if a[y][x] == 1:
+                            row_valid[y] = 0
 
-def solve(row_valid, col_valid, solution):
-    # using Algoritm X, find all solutions (= set of rows) given valid/uncovered rows and cols
-    pass
+    return row_valid
 
 
-solve(row_valid, col_valid, [])
+# kan nog versneld worden door best kolom terug te geven met minste 1'en
+def select_col(col_valid):
+    for i,v in enumerate(col_valid):
+        if v == 1:
+            return i 
 
-for solution in all_solutions:
+
+def solve(row_valid, col_valid, partial_solution):
+    if not any(col_valid): 
+        print("exact cover has been found", partial_solution)
+        yield partial_solution
+
+    if any(row_valid): # Als er nog een rij bij de potentiele oplossing te stoppen is gaan we door
+        selected_col_index = select_col(col_valid) # Selecteer een kolom (met minste 1'en om sneller te zijn)
+        for r_index in col_has_1_at[selected_col_index]:    # voor iedere rij met een gemeenschappelijke 1 met de geselecteerde kolom
+            row_valid_copy = row_valid.copy(); col_valid_copy = col_valid.copy() # onthoud oude situatie
+            
+            row_valid = cover(a[r_index], row_valid, col_valid) # cover de rijen die niks meer gaan toevoegen
+            for i,v in enumerate(a[r_index]): # update nu welke kolommen nog niet gevult zijn
+                if v == True:
+                    col_valid[i] = 0    
+            yield from solve(row_valid, col_valid, partial_solution + [r_index]) # DFS
+
+            row_valid = row_valid_copy; col_valid = col_valid_copy  # het vorige pad heeft niks opgelefert dus we gaan terug naar de vorige situatie
+
+
+# all_solutions = list(solve(row_valid, col_valid, []))
+
+for solution in solve(row_valid, col_valid, []):
     # solutions are sorted
     # place triominoes in matrix 3 rows x 4 cols
     D = [[0 for i in range(4)] for j in range(3)]
