@@ -121,10 +121,10 @@ def solveARC(grid, domains):
 
             changed_peers = []
             for peer in peers[open_cell]: # loop | -- [] cellen
-                if v in domains[peer]: # if v in cel
+                if v in domains[peer]: # IF v in cel
                     domains[peer].remove(v) # domains[| -- [] cellen] remove v
                     changed_peers.append(peer) # we changed this cell
-                    if len(domains[peer]) == 0: # we can not take this route anymore
+                    if len(domains[peer]) == 0: # IF we can not take this route anymore
                         emptied_domain = True
 
             if not emptied_domain and solveARC(grid.copy(), domains.copy()):
@@ -177,11 +177,13 @@ for i,sudo in enumerate(slist):
     print(sudo)
     d = parse_string_to_dict(sudo)
     start_time = time.time()
-    # solve(d)
 
+
+    solve(d)
 
     domains = dict((c, [d for d in digits]) for c in cells) # domain for each cell: {cell: [1..9]}
     assert(solveARC(d, domains) == True)
+    
 
     end_time = time.time()
     hours, rem = divmod(end_time-start_time, 3600)
